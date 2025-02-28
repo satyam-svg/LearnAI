@@ -4,9 +4,12 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedSafeAreaView } from '@/components/ThemedSafearea';
 import { View, Animated, Easing, Image, TextInput, TouchableOpacity } from 'react-native';
 import SplashScreen from '@/components/SplashScreen';
+import LoaderScreen from '../components/Loader'; // Import your LoaderScreen component
 import { useFonts } from 'expo-font';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import { Text } from 'react-native';
 
 export default function LoginScreen() {
   const [showSplash, setShowSplash] = useState(true);
@@ -14,6 +17,9 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showLoader, setShowLoader] = useState(false); // State for LoaderScreen visibility
+
+  const navigation = useNavigation();
 
   const [fontsLoaded] = useFonts({
     ABeeZee: require('../assets/fonts/ABeeZee-Regular.ttf'),
@@ -45,6 +51,15 @@ export default function LoginScreen() {
     }
   }, [showSplash, isFontLoaded]);
 
+  // Handle Sign Up Button Press
+  const handleSignUpPress = () => {
+    setShowLoader(true); // Show LoaderScreen
+    setTimeout(() => {
+      setShowLoader(false); // Hide LoaderScreen
+      navigation.navigate('Signup'); // Navigate to Signup screen
+    }, 5000); // 5 seconds delay
+  };
+
   if (!isFontLoaded) {
     return null;
   }
@@ -55,7 +70,7 @@ export default function LoginScreen() {
         <SplashScreen />
       ) : (
         <ThemedView style={{ flex: 1 }}>
-          
+          {/* Logo and Title */}
           <Animated.View
             style={{
               opacity: fadeAnim,
@@ -78,7 +93,7 @@ export default function LoginScreen() {
             </ThemedText>
           </Animated.View>
 
-         
+          {/* Login Form */}
           <View style={{ 
             position: 'absolute', 
             top: '50%', 
@@ -114,7 +129,7 @@ export default function LoginScreen() {
 
             {/* Password Input */}
             <View style={{ marginBottom: 20 }}>
-              <ThemedText style={{ marginBottom: 5 }}>Password</ThemedText>
+              <ThemedText style={{ marginBottom: 5 }}>PIN</ThemedText>
               <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -126,7 +141,7 @@ export default function LoginScreen() {
                 <MaterialIcons name="lock" size={20} color="gray" style={{ marginRight: 10 }} />
                 <TextInput
                   style={{ color: 'white', flex: 1 }}
-                  placeholder="Enter your password"
+                  placeholder="Enter your PIN"
                   placeholderTextColor="gray"
                   value={password}
                   onChangeText={setPassword}
@@ -162,15 +177,20 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             {/* Signup Link */}
-            <View style={{ alignItems: 'center' }}>
+            <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
               <ThemedText style={{ color: 'gray' }}>
                 Don't have an account?{' '}
-                <ThemedText style={{ color: '#ff8c00', fontWeight: 'bold' }}>
-                  Sign Up
-                </ThemedText>
               </ThemedText>
+              <TouchableOpacity onPress={handleSignUpPress}>
+                <Text style={{ color: '#ff8c00', fontWeight: 'bold' }}>
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
+
+          {/* LoaderScreen */}
+          {showLoader && <LoaderScreen />}
         </ThemedView>
       )}
     </ThemedSafeAreaView>

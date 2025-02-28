@@ -8,6 +8,14 @@
     "scheme": "myapp",
     "sourceExts": ["js", "jsx", "svgx"],
     "transformer": "node_modules/react-native-svg-transformer/index.js",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you set your profile picture."
+        }
+      ]
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
