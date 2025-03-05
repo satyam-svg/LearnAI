@@ -1,5 +1,16 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, Image, StyleSheet, Modal, FlatList } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Modal,
+  FlatList,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedSafeAreaView } from '@/components/ThemedSafearea';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,29 +19,26 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useFonts } from 'expo-font';
 import CountryPicker from 'react-native-country-picker-modal';
-
+import PinScreen from '../components/PinScreen'
 const SignupScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
   const [nickName, setNickName] = useState('');
   const [dob, setDob] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [gender, setGender] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
   const [profileImage, setProfileImage] = useState(null);
-  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
-  const [countryCode, setCountryCode] = useState('91');
+  const [showClassModal, setShowClassModal] = useState(false);
   const [country, setCountry] = useState(null);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPinScreen, setShowPinScreen] = useState(false);
 
   const [fontsLoaded] = useFonts({
     ABeeZee: require('../assets/fonts/ABeeZee-Regular.ttf'),
   });
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
+  const classOptions = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -44,8 +52,15 @@ const SignupScreen = ({ navigation }) => {
       setProfileImage(result.assets[0].uri);
     }
   };
+  
 
-  const genderOptions = ['Male', 'Female', 'Other'];
+  const handleContinue = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setShowPinScreen(true); // Show PinScreen component
+    }, 1000);
+  };
 
   if (!fontsLoaded) {
     return null;
@@ -53,8 +68,19 @@ const SignupScreen = ({ navigation }) => {
 
   return (
     <ThemedSafeAreaView style={styles.container}>
+
+<Modal
+        visible={showPinScreen}
+        transparent={false}
+        animationType="slide"
+      >
+        <PinScreen />
+      </Modal>
       {/* Header */}
-      <View style={styles.header}>
+
+      {!showPinScreen && (
+        <>
+             <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -79,7 +105,10 @@ const SignupScreen = ({ navigation }) => {
       </ThemedView>
 
       {/* Form Inputs */}
-      <View style={styles.formContainer}>
+      <ScrollView
+        style={styles.formContainer}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         {/* Full Name */}
         <View style={styles.inputContainer}>
           <TextInput
@@ -110,7 +139,7 @@ const SignupScreen = ({ navigation }) => {
             placeholderTextColor="#aaa"
             value={dob}
             onChangeText={setDob}
-            style={[styles.input, { paddingLeft: 40,margin:12 }]}
+            style={[styles.input, { paddingLeft: 40, margin: 12 }]}
           />
         </View>
 
@@ -122,7 +151,7 @@ const SignupScreen = ({ navigation }) => {
             placeholderTextColor="#aaa"
             value={email}
             onChangeText={setEmail}
-            style={[styles.input, { paddingLeft: 40,margin:12 }]}
+            style={[styles.input, { paddingLeft: 40, margin: 12 }]}
             keyboardType="email-address"
           />
         </View>
@@ -130,7 +159,7 @@ const SignupScreen = ({ navigation }) => {
         {/* Phone Number */}
         <View style={styles.inputContainer}>
           <MaterialIcons name="phone" size={24} color="#aaa" style={styles.icon} />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.countryCodeContainer}
             onPress={() => setShowCountryPicker(true)}
           >
@@ -148,68 +177,79 @@ const SignupScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Gender Dropdown */}
-        <TouchableOpacity 
+        {/* Class Selection */}
+        <TouchableOpacity
           style={styles.inputContainer}
-          onPress={() => setShowGenderDropdown(!showGenderDropdown)}
+          onPress={() => setShowClassModal(true)}
         >
-          <MaterialIcons name="person-outline" size={24} color="#aaa" style={styles.icon} />
-          <ThemedText style={[styles.input, { color: gender ? 'white' : '#aaa' },{margin:42,paddingTop:12}]}>
-            {gender || 'Select Gender'}
+          <MaterialIcons name="class" size={24} color="#aaa" style={styles.icon} />
+          <ThemedText style={[styles.input, { color: selectedClass ? 'white' : '#aaa',marginTop: 28,marginLeft:30 }]}>
+            <ThemedText>Class  {selectedClass || 'Select Class (1-12)'}</ThemedText>
           </ThemedText>
-          <MaterialIcons 
-            name={showGenderDropdown ? 'arrow-drop-up' : 'arrow-drop-down'} 
-            size={24} 
-            color="#aaa" 
-            style={styles.dropdownIcon}
-          />
         </TouchableOpacity>
+      </ScrollView>
 
-        {showGenderDropdown && (
-          <View style={styles.dropdownContainer}>
-            {genderOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.dropdownOption}
-                onPress={() => {
-                  setGender(option);
-                  setShowGenderDropdown(false);
-                }}
-              >
-                <ThemedText style={styles.dropdownOptionText}>{option}</ThemedText>
-              </TouchableOpacity>
-            ))}
+      {/* Class Selection Modal */}
+      <Modal visible={showClassModal} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <FlatList
+              data={classOptions}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => {
+                    setSelectedClass(item);
+                    setShowClassModal(false);
+                  }}
+                >
+                  <ThemedText style={styles.modalOptionText}>Class {item}</ThemedText>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item}
+            />
           </View>
-        )}
-      </View>
-
-      <TouchableOpacity style={styles.buttonContainer}>
-        <LinearGradient
-          colors={['#CA17BC', '#FE1F14', '#FFB800']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradientButton}
-        >
-          <ThemedText style={styles.buttonText}>Continue</ThemedText>
-        </LinearGradient>
-      </TouchableOpacity>
+        </View>
+      </Modal>
 
       {/* Country Picker Modal */}
-      {/* <CountryPicker
-        visible={showCountryPicker}
-        withCallingCode
-        withFilter
-        withFlag
-        withEmoji
-        onSelect={(country) => {
-          setCountry(country);
-          setShowCountryPicker(false);
-        }}
-        onClose={() => setShowCountryPicker(false)}
-      /> */}
+      <Modal visible={showCountryPicker} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <CountryPicker
+              withCallingCode
+              withFilter
+              withFlag
+              withEmoji
+              onSelect={(country) => {
+                setCountry(country);
+                setShowCountryPicker(false);
+              }}
+              onClose={() => setShowCountryPicker(false)}
+            />
+          </View>
+        </View>
+      </Modal>
 
-      {/* Continue Button */}
-     
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={handleContinue}>
+          
+          <LinearGradient
+            colors={['#CA17BC', '#FE1F14', '#FFB800']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.gradientButton}
+          >
+            <ThemedText style={styles.buttonText}>Continue</ThemedText>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+        </> 
+      )}
+      
+
+      {/* Fixed Continue Button */}
+      
     </ThemedSafeAreaView>
   );
 };
@@ -234,7 +274,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: 'white',
     marginBottom: 20,
-    fontFamily:'ABeeZee'
+    fontFamily: 'ABeeZee',
   },
   profileImageContainer: {
     width: 120,
@@ -298,28 +338,11 @@ const styles = StyleSheet.create({
   countryCodeText: {
     color: 'white',
   },
-  dropdownIcon: {
-    position: 'absolute',
-    right: 15,
-  },
-  dropdownContainer: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 15,
-    marginTop: -10,
-    marginBottom: 15,
-  },
-  dropdownOption: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  dropdownOptionText: {
-    color: 'white',
-    fontSize: 16,
-  },
   buttonContainer: {
-    marginVertical: 30,
-    position:'fixed'
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
   },
   gradientButton: {
     borderRadius: 25,
@@ -330,6 +353,28 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 15,
+    padding: 20,
+    width: '80%',
+    maxHeight: '60%',
+  },
+  modalOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  modalOptionText: {
+    color: 'white',
+    fontSize: 16,
   },
 });
 
